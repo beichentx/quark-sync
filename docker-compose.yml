@@ -1,0 +1,25 @@
+services:
+  quark-sync:
+    image: ghcr.io/<your-github-username>/quark-sync:latest  # 或本地构建: build: .
+    container_name: quark-sync
+    restart: unless-stopped
+    ports:
+      - "${PORT:-49999}:49999"
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1001}
+      - TZ=${TZ:-Asia/Shanghai}
+      - SRC_BASE=${SRC_BASE:-/mnt/quark}
+      - DST_BASE=${DST_BASE:-/sync/quark}
+      - FOLDERS=${FOLDERS:?请在 .env 里配置 FOLDERS（源目录下要同步的子目录名，空格分隔）}
+      - STATE_DIR=/state
+    volumes:
+      - ./data:/state                       # 跨重启持久：状态/活跃度基线
+      - ${SRC_BASE:-/mnt/quark}:/mnt/quark  # 夸克网盘挂载目录（只读推荐 :ro）
+      - ${DST_BASE:-/sync/quark}:/sync/quark
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.10.0/24   # 显式声明，防与局域网网段冲突
